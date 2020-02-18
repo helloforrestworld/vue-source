@@ -1,5 +1,6 @@
 import Vue from 'vue'
 
+// eslint-disable-next-line no-unused-vars
 const vm = new Vue({
   el: '#app',
   data() {
@@ -21,5 +22,5 @@ const vm = new Vue({
 // vm.obj.name = 'Ben'
 // vm.arr.push({ a: 1 })
 // console.log(vm.arr[3].a)
-console.log(vm.arr[0].a)
-vm.arr[0].a = 123
+// console.log(vm.arr[0].a)
+// vm.arr[0].a = 123
