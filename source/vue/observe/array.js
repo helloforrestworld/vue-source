@@ -20,8 +20,7 @@ methods.forEach(method => {
     // 调用原数组方法
     const r = arrayProto[method].apply(this, args)
 
-    // todo
-    console.log('调用了数组的方法设置数据')
+    // TODO
 
     // 对新增的元素进行观测
     let inserted

@@ -26,3 +26,9 @@ const vm = new Vue({
 // vm.arr[0].a = 123
 
 window.vm = vm
+
+setTimeout(() => {
+  vm.msg = 'haha'
+  vm.msg = 'xixi'
+  vm.msg = 'papa'
+}, 1000)

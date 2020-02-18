@@ -11,7 +11,6 @@ export function defineReactive(data, key, value) {
 
   Object.defineProperty(data, key, {
     get() {
-      console.log('获取数据')
       // 取数据的时候进行依赖收集
       if (Dep.target) {
         dep.depend()
@@ -22,7 +21,6 @@ export function defineReactive(data, key, value) {
       if (newValue === value) return
 
       observe(newValue) // 如果设置的值是对象的话，需要继续观察一层
-      console.log(`设置属性:${value} => ${newValue}`)
 
       // defineReactive执行是一个闭包，value值会共享。
       value = newValue

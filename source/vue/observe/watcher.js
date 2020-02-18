@@ -35,7 +35,7 @@ class Watcher {
   }
 
   update() {
-    console.log('watcher update')
+    console.log('update')
     this.get()
   }
 

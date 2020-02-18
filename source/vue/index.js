@@ -22,14 +22,12 @@ Vue.prototype._init = function (options) {
 
 Vue.prototype.$mount = function () {
   const vm = this
+  // eslint-disable-next-line no-unused-vars
   let el = vm.$options.el
   el = vm.$el = query(el)
 
-  console.log(el)
-
   // 渲染/更新逻辑
   const updateComponent = () => {
-    console.log('执行updateComponent')
     vm._update()
   }
 
@@ -49,7 +47,6 @@ Vue.prototype._update = function () {
   }
   complier(node, vm)
   el.appendChild(node)
-  console.log('更新')
 }
 
 function query(el) {
