@@ -14,7 +14,7 @@ export function defineReactive(data, key, value) {
       console.log('获取数据')
       // 取数据的时候进行依赖收集
       if (Dep.target) {
-        dep.addSub(Dep.target)
+        dep.depend()
       }
       return value
     },

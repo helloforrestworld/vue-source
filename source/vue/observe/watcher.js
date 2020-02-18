@@ -19,6 +19,9 @@ class Watcher {
     this.opts = opts
     this.id = id++
 
+    this.deps = []
+    this.depIds = new Set()
+
     // 创建watcher时候默认会调用一次get方法
     this.get()
   }
@@ -34,6 +37,15 @@ class Watcher {
   update() {
     console.log('watcher update')
     this.get()
+  }
+
+  addDep(dep) {
+    const id = dep.id
+    if (!this.depIds.has(id)) {
+      this.depIds.add(id)
+      this.deps.push(dep)
+      dep.addSub(this)
+    }
   }
 }
 

@@ -12,10 +12,17 @@ class Dep {
   notify() {
     this.subs.forEach(watcher => watcher.update())
   }
+
+  // 让dep跟watcher相互记忆
+  // 同一个dep不能添加相同的watcher
+  depend() {
+    if (Dep.target) { // 防止depend被直接调用
+      Dep.target.addDep(this)
+    }
+  }
 }
 
 // 保存当前watcher
-// 后面使用
 const stack = []
 export function pushTarget(watcher) {
   Dep.target = watcher
