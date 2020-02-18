@@ -24,3 +24,5 @@ const vm = new Vue({
 // console.log(vm.arr[3].a)
 // console.log(vm.arr[0].a)
 // vm.arr[0].a = 123
+
+window.vm = vm

@@ -1,3 +1,5 @@
+import { pushTarget, popTarget } from './dep'
+
 let id = 0 // 每个watcher的标识
 class Watcher {
   /**
@@ -17,11 +19,21 @@ class Watcher {
     this.opts = opts
     this.id = id++
 
-    this.get() // 创建watcher时候默认会调用一次get方法
+    // 创建watcher时候默认会调用一次get方法
+    this.get()
   }
 
   get() {
+    // 往Dep添加一个target，指向当前watcher
+    pushTarget(this)
     this.getter && this.getter()
+    // getter执行完毕后，把当前watcher从Dep.target中剔除
+    popTarget()
+  }
+
+  update() {
+    console.log('watcher update')
+    this.get()
   }
 }
 
