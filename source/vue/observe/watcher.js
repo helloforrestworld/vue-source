@@ -1,4 +1,5 @@
 import { pushTarget, popTarget } from './dep'
+import nextTick from './nextTick'
 
 let id = 0 // 每个watcher的标识
 class Watcher {
@@ -35,7 +36,7 @@ class Watcher {
   }
 
   update() {
-    console.log('update1')
+    console.log('update')
     queueWatcher(this)
   }
 
@@ -56,7 +57,7 @@ class Watcher {
 
 const queueIds = new Set()
 let queue = []
-function flaskQueue() {
+function flushQueue() {
   if (!queue.length) return
   queue.forEach(watcher => watcher.run())
   queueIds.clear()
@@ -69,8 +70,7 @@ function queueWatcher(watcher) {
     queueIds.add(id)
     queue.push(watcher)
 
-    // TODO replace with nextTick
-    setTimeout(flaskQueue, 0)
+    nextTick(flushQueue)
   }
 }
 
