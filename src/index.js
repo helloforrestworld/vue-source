@@ -6,7 +6,7 @@ const vm = new Vue({
     return {
       msg: 'hello, world',
       obj: { name: 'forrest', age: 12 },
-      arr: [1, 2, 3]
+      arr: [{ a: 1 }, 1, 2, 3]
     }
   },
   computed: {
@@ -18,4 +18,8 @@ const vm = new Vue({
 })
 
 // console.log(vm.obj.name)
-vm.obj.name = 'Ben'
+// vm.obj.name = 'Ben'
+// vm.arr.push({ a: 1 })
+// console.log(vm.arr[3].a)
+console.log(vm.arr[0].a)
+vm.arr[0].a = 123
