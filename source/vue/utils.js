@@ -10,7 +10,12 @@ const utils = {
     }, vm)
   },
   complierText(node, vm) {
-    node.textContent = node.textContent.replace(defaultReg, (...args) => {
+    // 第一次渲染时给node添加自定义属性存放模版
+    if (!node.expr) {
+      node.expr = node.textContent
+    }
+    // 替换模版中的表达式，更新到节点的textContent中
+    node.textContent = node.expr.replace(defaultReg, (...args) => {
       return utils.getValue(vm, args[1])
     })
   }
