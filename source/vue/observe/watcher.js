@@ -4,10 +4,10 @@ let id = 0 // 每个watcher的标识
 class Watcher {
   /**
    *
-   * @param {*} vm 当前Vue实例
-   * @param {*} exprOrFn 表达式或者函数 vm.$watch('msg', cb) 如'msg'
-   * @param {*} cb  表达式或者函数 vm.$watch('msg', cb) 如cb
-   * @param {*} opts 其他的一些参数
+   * @param {Vue} vm 当前Vue实例
+   * @param {string|function} exprOrFn 表达式或者函数 vm.$watch('msg', cb) 如'msg'
+   * @param {function} cb  表达式或者函数 vm.$watch('msg', cb) 如cb
+   * @param {Object} opts 其他的一些参数
    */
   constructor(vm, exprOrFn, cb = () => {}, opts = {}) {
     this.vm = vm
