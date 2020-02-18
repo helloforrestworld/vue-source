@@ -15,6 +15,8 @@ module.exports = {
     sourceType: 'module'
   },
   rules: {
-    semi: [2, 'never']
+    semi: [1, 'never'],
+    'space-before-function-paren': 0,
+    'no-unused-vars': 1
   }
 }
