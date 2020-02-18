@@ -35,8 +35,8 @@ class Watcher {
   }
 
   update() {
-    console.log('update')
-    this.get()
+    console.log('update1')
+    queueWatcher(this)
   }
 
   addDep(dep) {
@@ -46,6 +46,31 @@ class Watcher {
       this.deps.push(dep)
       dep.addSub(this)
     }
+  }
+
+  run() {
+    console.log('run')
+    this.get()
+  }
+}
+
+const queueIds = new Set()
+let queue = []
+function flaskQueue() {
+  if (!queue.length) return
+  queue.forEach(watcher => watcher.run())
+  queueIds.clear()
+  queue = []
+}
+
+function queueWatcher(watcher) {
+  const id = watcher.id
+  if (!queueIds.has(id)) {
+    queueIds.add(id)
+    queue.push(watcher)
+
+    // TODO replace with nextTick
+    setTimeout(flaskQueue, 0)
   }
 }
 
