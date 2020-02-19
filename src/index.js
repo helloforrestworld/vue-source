@@ -14,7 +14,15 @@ const vm = new Vue({
 
   },
   watch: {
-
+    msg: {
+      handler: function (newValue, oldValue) {
+        console.log({
+          newValue,
+          oldValue
+        })
+      },
+      immediate: true
+    }
   }
 })
 
@@ -26,12 +34,23 @@ const vm = new Vue({
 // vm.arr[0].a = 123
 
 window.vm = vm
-vm.$watch('msg', function (newValue, oldValue) {
-  console.log({
-    newValue,
-    oldValue
-  })
-})
+
+// vm.$watch('msg', function (newValue, oldValue) {
+//   console.log({
+//     newValue,
+//     oldValue
+//   })
+// })
+
+// vm.$watch('msg', {
+//   handler: function (newValue, oldValue) {
+//     console.log({
+//       newValue,
+//       oldValue
+//     })
+//   },
+//   immediate: true
+// })
 
 setTimeout(() => {
   // vm.msg = 'haha'

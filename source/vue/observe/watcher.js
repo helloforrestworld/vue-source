@@ -25,13 +25,13 @@ class Watcher {
         return utils.getValue(vm, exprOrFn)
       }
     }
-    // 用户添加的watcher，标记一下
-    if (opts.user) {
-      this.user = true
-    }
+
     this.cb = cb
     this.opts = opts
     this.id = id++
+    this.immediate = opts.immediate
+    // 用户添加的watcher，标记一下
+    this.user = opts.user
 
     // 记录当前watcher订阅的依赖
     this.deps = []
@@ -39,6 +39,10 @@ class Watcher {
 
     // 创建watcher时候默认会调用一次get方法
     this.value = this.get()
+
+    if (this.immediate) {
+      this.cb(this.value)
+    }
   }
 
   get() {

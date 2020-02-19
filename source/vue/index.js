@@ -49,9 +49,15 @@ Vue.prototype._update = function () {
   el.appendChild(node)
 }
 
-Vue.prototype.$watch = function (expr, handler) {
+Vue.prototype.$watch = function (expr, useDef) {
   const vm = this
-  new Watcher(vm, expr, handler, { user: true })
+  let handler = useDef
+  const opts = { user: true }
+  if (useDef.handler) {
+    handler = useDef.handler
+    Object.assign(opts, useDef)
+  }
+  new Watcher(vm, expr, handler, opts)
 }
 
 function query(el) {

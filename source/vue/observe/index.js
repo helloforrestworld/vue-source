@@ -62,11 +62,11 @@ function initComputed() {
 function initWatch(vm) {
   const watch = vm.$options.watch
   for (const key in watch) {
-    const handler = watch[key]
-    createWatcher(vm, key, handler)
+    const useDef = watch[key]
+    createWatcher(vm, key, useDef)
   }
 }
 
-function createWatcher(vm, key, handler) {
-  vm.$watch(key, handler)
+function createWatcher(vm, key, useDef) {
+  vm.$watch(key, useDef)
 }
