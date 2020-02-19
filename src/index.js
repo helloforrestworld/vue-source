@@ -28,7 +28,8 @@ const vm = new Vue({
 window.vm = vm
 
 setTimeout(() => {
-  vm.msg = 'haha'
-  vm.msg = 'xixi'
-  vm.msg = 'papa'
+  // vm.msg = 'haha'
+  // vm.msg = 'xixi'
+  // vm.msg = 'papa'
+  vm.arr.push(100)
 }, 1000)

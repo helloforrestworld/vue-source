@@ -20,7 +20,11 @@ export function initState (vm) {
 export function observe(data) {
   // 如果不是对象直接返回，不需要观察
   if (typeof data !== 'object' || data === null) {
-    return data
+    return
+  }
+  // 已经观察过的对象直接返回__ob__
+  if (data.__ob__) {
+    return data.__ob__
   }
   return new Observer(data)
 }

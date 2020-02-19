@@ -20,8 +20,6 @@ methods.forEach(method => {
     // 调用原数组方法
     const r = arrayProto[method].apply(this, args)
 
-    // TODO
-
     // 对新增的元素进行观测
     let inserted
     switch (method) {
@@ -33,6 +31,9 @@ methods.forEach(method => {
         inserted = args.slice(2)
     }
     observeArray(inserted)
+
+    // 找到Observer实例化时添加的dep，并通知更新。
+    this.__ob__.dep.notify()
     return r
   }
 })
