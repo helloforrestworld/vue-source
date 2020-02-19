@@ -1,5 +1,6 @@
 import { pushTarget, popTarget } from './dep'
 import nextTick from './nextTick'
+import { utils } from '../utils'
 
 let id = 0 // 每个watcher的标识
 class Watcher {
@@ -14,25 +15,39 @@ class Watcher {
     this.vm = vm
     this.exprOrFn = exprOrFn
     if (typeof exprOrFn === 'function') {
+      // 渲染watcher的updateComponent函数
       this.getter = exprOrFn
+    } else if (typeof exprOrFn === 'string') {
+      // 用户watcher
+      // 解析expr，取到data上的值
+      // 取值的时候完成依赖收集
+      this.getter = function () {
+        return utils.getValue(vm, exprOrFn)
+      }
+    }
+    // 用户添加的watcher，标记一下
+    if (opts.user) {
+      this.user = true
     }
     this.cb = cb
     this.opts = opts
     this.id = id++
 
+    // 记录当前watcher订阅的依赖
     this.deps = []
     this.depIds = new Set()
 
     // 创建watcher时候默认会调用一次get方法
-    this.get()
+    this.value = this.get()
   }
 
   get() {
     // 往Dep添加一个target，指向当前watcher
     pushTarget(this)
-    this.getter && this.getter()
+    const value = this.getter()
     // getter执行完毕后，把当前watcher从Dep.target中剔除
     popTarget()
+    return value
   }
 
   update() {
@@ -40,6 +55,7 @@ class Watcher {
     queueWatcher(this)
   }
 
+  // 一个watcher对同一个dep只订阅一次
   addDep(dep) {
     const id = dep.id
     if (!this.depIds.has(id)) {
@@ -51,7 +67,13 @@ class Watcher {
 
   run() {
     console.log('run')
-    this.get()
+    const newValue = this.get()
+
+    // 比较新旧值，执行用户添加的handler
+    if (newValue !== this.value) {
+      this.cb(newValue, this.value)
+      this.value = newValue
+    }
   }
 }
 

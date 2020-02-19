@@ -26,11 +26,17 @@ const vm = new Vue({
 // vm.arr[0].a = 123
 
 window.vm = vm
+vm.$watch('msg', function (newValue, oldValue) {
+  console.log({
+    newValue,
+    oldValue
+  })
+})
 
 setTimeout(() => {
   // vm.msg = 'haha'
   // vm.msg = 'xixi'
   // vm.msg = 'papa'
   // vm.arr.push(100)
-  vm.arr[0].push(100)
+  // vm.arr[0].push(100)
 }, 1000)

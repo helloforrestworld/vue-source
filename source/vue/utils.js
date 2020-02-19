@@ -2,7 +2,7 @@
 // 非贪婪模式 `{{a}} {{b}}` 保证识别到是两组而不是一组
 const defaultReg = /\{\{((?:.|\r?\n)+?)\}\}/g
 
-const utils = {
+export const utils = {
   getValue(vm, expr) {
     const keys = expr.split('.')
     return keys.reduce((memo, current) => {

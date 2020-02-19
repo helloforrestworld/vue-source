@@ -49,6 +49,11 @@ Vue.prototype._update = function () {
   el.appendChild(node)
 }
 
+Vue.prototype.$watch = function (expr, handler) {
+  const vm = this
+  new Watcher(vm, expr, handler, { user: true })
+}
+
 function query(el) {
   if (typeof el === 'string') {
     return document.querySelector(el)
