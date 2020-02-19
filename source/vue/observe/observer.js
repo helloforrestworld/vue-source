@@ -1,11 +1,10 @@
 import { observe } from './index'
-import { newArrayProto, observeArray } from './array'
+import { newArrayProto, observeArray, dependArray } from './array'
 import Dep from './dep'
 
 export function defineReactive(data, key, value) {
   // 如果value是对象的话，需要继续观察一层
   const obs = observe(value)
-
   // 给每个属性都添加一个dep
   const dep = new Dep()
 
@@ -14,22 +13,24 @@ export function defineReactive(data, key, value) {
       // 取数据的时候进行依赖收集
       if (Dep.target) {
         dep.depend()
-
         // 如果有返回值,value是对象或者数组
         if (obs) {
+          // 数组依赖收集
           obs.dep.depend()
+
+          // [[1, 2, 3], 1, 2]
+          // 处理嵌套数组的依赖收集
+          dependArray(value)
         }
       }
       return value
     },
     set(newValue) {
       if (newValue === value) return
-
-      observe(newValue) // 如果设置的值是对象的话，需要继续观察一层
-
+      // 如果设置的值是对象的话，需要继续观察一层
+      observe(newValue)
       // defineReactive执行是一个闭包，value值会共享。
       value = newValue
-
       // 数据变化，通知更新视图
       dep.notify()
     }

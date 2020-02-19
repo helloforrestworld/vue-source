@@ -7,7 +7,7 @@ const vm = new Vue({
     return {
       msg: 'hello, world',
       obj: { name: 'forrest', age: 12 },
-      arr: [{ a: 1 }, 1, 2, 3]
+      arr: [[0], 1, 2, 3]
     }
   },
   computed: {
@@ -31,5 +31,6 @@ setTimeout(() => {
   // vm.msg = 'haha'
   // vm.msg = 'xixi'
   // vm.msg = 'papa'
-  vm.arr.push(100)
+  // vm.arr.push(100)
+  vm.arr[0].push(100)
 }, 1000)
