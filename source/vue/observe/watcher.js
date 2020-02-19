@@ -16,6 +16,7 @@ class Watcher {
     this.exprOrFn = exprOrFn
     if (typeof exprOrFn === 'function') {
       // 渲染watcher的updateComponent函数
+      // 或者是computed函数
       this.getter = exprOrFn
     } else if (typeof exprOrFn === 'string') {
       // 用户watcher
@@ -32,13 +33,18 @@ class Watcher {
     this.immediate = opts.immediate
     // 用户添加的watcher，标记一下
     this.user = opts.user
+    // 标记是否为计算属性
+    this.lazy = opts.lazy
+    // 标记计算属性依赖是否变化了，是否需要重新计算值
+    this.dirty = this.lazy
 
     // 记录当前watcher订阅的依赖
     this.deps = []
     this.depIds = new Set()
 
     // 创建watcher时候默认会调用一次get方法
-    this.value = this.get()
+    // 如果是计算属性，开始时默认不会去取值
+    this.value = this.lazy ? undefined : this.get()
 
     if (this.immediate) {
       this.cb(this.value)
@@ -48,15 +54,33 @@ class Watcher {
   get() {
     // 往Dep添加一个target，指向当前watcher
     pushTarget(this)
-    const value = this.getter()
+    const value = this.getter.call(this.vm)
     // getter执行完毕后，把当前watcher从Dep.target中剔除
     popTarget()
     return value
   }
 
+  // 计算属性求值
+  evaluate() {
+    this.value = this.get()
+    this.dirty = false
+  }
+
   update() {
-    console.log('update')
-    queueWatcher(this)
+    if (this.lazy) {
+      // 计算属性watcher更新只需要把dirty改为true
+      // 当获取计算属性时便会重新evaluate
+      this.dirty = true
+    } else {
+      queueWatcher(this)
+    }
+  }
+
+  depend() {
+    let i = this.deps.length
+    while (i--) {
+      this.deps[i].depend()
+    }
   }
 
   // 一个watcher对同一个dep只订阅一次
@@ -70,7 +94,6 @@ class Watcher {
   }
 
   run() {
-    console.log('run')
     const newValue = this.get()
 
     // 比较新旧值，执行用户添加的handler

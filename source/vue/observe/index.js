@@ -1,4 +1,6 @@
 import Observer from './observer'
+import Watcher from './watcher'
+import Dep from './dep'
 
 // 做不同的初始化工作
 export function initState (vm) {
@@ -9,7 +11,7 @@ export function initState (vm) {
   }
 
   if (opts.computed) {
-    initComputed()
+    initComputed(vm)
   }
 
   if (opts.watch) {
@@ -55,8 +57,37 @@ function initData(vm) {
   observe(vm._data)
 }
 
-function initComputed() {
+// 计算属性getter工厂函数
+function createComputedGetter(vm, key) {
+  const watcher = vm._watchersComputed[key]
+  return function () {
+    if (watcher) {
+      // 只有当依赖变化的时候需要重新evaluate
+      if (watcher.dirty) {
+        watcher.evaluate()
+      }
+      // 让计算属性的依赖添加一个渲染watcher
+      // 这样每个计算属性依赖都会有一个computed watcher和一个渲染watcher
+      if (Dep.target) {
+        watcher.depend()
+      }
+    }
+    return watcher.value
+  }
+}
 
+function initComputed(vm) {
+  const computed = vm.$options.computed
+  // 创建一个存放所有computed watcher的对象，存放在实例上
+  const watchers = vm._watchersComputed = Object.create(null)
+  for (const key in computed) {
+    watchers[key] = new Watcher(vm, computed[key], () => {}, { lazy: true })
+
+    // 把计算属性定义到vm上。
+    Object.defineProperty(vm, key, {
+      get: createComputedGetter(vm, key)
+    })
+  }
 }
 
 function initWatch(vm) {

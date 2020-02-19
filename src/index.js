@@ -7,22 +7,26 @@ const vm = new Vue({
     return {
       msg: 'hello, world',
       obj: { name: 'forrest', age: 12 },
-      arr: [[0], 1, 2, 3]
+      arr: [[0], 1, 2, 3],
+      firstName: 'Forrest',
+      lastName: 'Lau'
     }
   },
   computed: {
-
+    fullName() {
+      return this.firstName + this.lastName
+    }
   },
   watch: {
-    msg: {
-      handler: function (newValue, oldValue) {
-        console.log({
-          newValue,
-          oldValue
-        })
-      },
-      immediate: true
-    }
+    // msg: {
+    //   handler: function (newValue, oldValue) {
+    //     console.log({
+    //       newValue,
+    //       oldValue
+    //     })
+    //   },
+    //   immediate: true
+    // }
   }
 })
 
