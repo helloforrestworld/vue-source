@@ -20,6 +20,9 @@ module.exports = {
     'no-unused-vars': 1,
     'no-new': 0,
     'no-cond-assign': 0,
-    'no-prototype-builtins': 0
+    'no-prototype-builtins': 0,
+    'prefer-const': 0,
+    'no-case-declarations': 0,
+    'no-debugger': 0
   }
 }

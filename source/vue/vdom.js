@@ -49,7 +49,7 @@ export function createElement(tag, data, children = null) {
 }
 
 export function render(vnode, container) {
-  // 区分首次渲染和再次渲
+  // 区分首次渲染和再次渲染
   if (container.vnode) {
     patch(container.vnode, vnode, container)
   } else {
@@ -159,49 +159,113 @@ function updateChildren(
             container.removeChild(prevChildren[i].el)
           }
           break
-        case childType.MULTIPLE: {
-          let lastIndex = 0
-          for (let i = 0; i < nextChildren.length; i++) {
-            let find = false
-            const nextVnode = nextChildren[i]
-            let j = 0
-            for (j; j < prevChildren.length; j++) {
-              const prevVnode = prevChildren[j]
-              if (prevVnode.key === nextVnode.key) {
-                find = true
-                patch(prevVnode, nextVnode, container)
-                if (j < lastIndex) {
-                  // 需要移动
-                  const flagNode = nextChildren[i - 1].el.nextSibling
-                  container.insertBefore(prevVnode.el, flagNode)
-                  break
+        case childType.MULTIPLE:
+          let oldStartIdx = 0
+          let oldEndIdx = prevChildren.length - 1
+          let newStartIdx = 0
+          let newEndIdx = nextChildren.length - 1
+
+          let oldStartVnode = prevChildren[0]
+          let oldEndVnode = prevChildren[oldEndIdx]
+          let newStartVnode = nextChildren[0]
+          let newEndVnode = nextChildren[newEndIdx]
+          let oldKeyToIdx, vnodeToMove
+
+          // 新旧只要有一个左游标超出右游标，循环结束
+          while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+            if (oldStartVnode === undefined) { // 当旧的vnode被移到左边后
+              oldStartVnode = prevChildren[++oldStartIdx]
+            } else if (oldEndVnode === undefined) {
+              oldEndVnode = prevChildren[--oldEndIdx]
+            } else if (sameVnode(oldStartVnode, newStartVnode)) {
+              patch(oldStartVnode, newStartVnode, container)
+              oldStartVnode = prevChildren[++oldStartIdx]
+              newStartVnode = nextChildren[++newStartIdx]
+            } else if (sameVnode(oldEndVnode, newEndVnode)) {
+              patch(oldEndVnode, newEndVnode, container)
+              oldEndVnode = prevChildren[--oldEndIdx]
+              newEndVnode = nextChildren[--newEndIdx]
+            } else if (sameVnode(oldStartVnode, newEndVnode)) {
+              patch(oldStartVnode, newEndVnode, container)
+              // 旧头和新尾相同，把旧节点移动到右侧
+              container.insertBefore(oldStartVnode.el, oldEndVnode.el.nextSibling)
+              oldStartVnode = prevChildren[++oldStartIdx]
+              newEndVnode = nextChildren[--newEndIdx]
+            } else if (sameVnode(oldEndVnode, newStartVnode)) {
+              // 旧尾和新头相同，把旧节点移动到左侧
+              container.insertBefore(oldEndVnode.el, oldStartVnode.el)
+              oldEndVnode = prevChildren[--oldEndIdx]
+              newStartVnode = nextChildren[++newStartIdx]
+            } else {
+              // 头尾对比完毕，开始对比key
+              if (!newStartVnode.key) { // newStartVnode没有key，创建新元素
+                mount(newStartVnode, container, oldStartVnode.el)
+              } else {
+                // oldChildren key的映射对象
+                if (!oldKeyToIdx) oldKeyToIdx = createKeyToOldIdx(prevChildren, oldStartIdx, oldEndIdx)
+
+                let idxInOld = oldKeyToIdx[newStartVnode.key]
+                if (!idxInOld) { // newStartVnode有key，但是在旧的vnode没找着，同样创建新元素
+                  mount(newStartVnode, container, oldStartVnode.el)
                 } else {
-                  lastIndex = j
+                  vnodeToMove = prevChildren[idxInOld]
+                  if (sameVnode(vnodeToMove, newStartVnode)) {
+                    // 找到可以被复用的元素
+                    patch(vnodeToMove, newStartVnode, container)
+                    // 旧vnode置为undefined
+                    prevChildren[idxInOld] = undefined
+                    // 移动找到的元素
+                    container.insertBefore(vnodeToMove.el, newStartVnode.el)
+                  } else {
+                    // 找到相同key，但是是不是用一个元素，可能tag不同等，同样创建新元素
+                    mount(newStartVnode, container, oldStartVnode.el)
+                  }
                 }
               }
-            }
-            if (!find) {
-              // 需要新增
-              const flagNode = i === 0 ? prevChildren[0].el : nextChildren[i - 1].el.nextSibling
-              mount(nextVnode, container, flagNode)
+              // 更新一下游标循环继续
+              newStartVnode = nextChildren[++newStartIdx]
             }
           }
-
-          // 移除不需要的元素
-          for (let i = 0; i < prevChildren.length; i++) {
-            const prevVnode = prevChildren[i]
-            const has = nextChildren.find(next => next.key === prevVnode.key)
-            if (!has) {
-              container.removeChild(prevVnode.el)
+          // while循环结束
+          if (oldStartIdx > oldEndIdx) {
+            // 旧vnode节点集合先被遍历完成，说明还有新节点需要加入
+            for (; newStartIdx <= newEndIdx; newStartIdx++) {
+              // 如果newEndIdx还在最右侧，说明最右侧元素还没被挂载，元素直接append到容器最后面就得。
+              // 如果nextChildren[newEndIdx + 1]不能于undefined，说明右侧的元素有部分被挂载了，所以元素需要往它前面insert。
+              const flagNode = nextChildren[newEndIdx + 1] === undefined ? null : nextChildren[newEndIdx + 1].el
+              mount(nextChildren[newStartIdx], container, flagNode)
+            }
+          } else if (newStartIdx > newEndIdx) {
+            // 新vnode节点集合先被遍历完成，说明需要移除多余的节点
+            for (; oldStartIdx <= oldEndIdx; oldStartIdx++) {
+              container.removeChild(prevChildren[oldStartIdx].el)
             }
           }
-          break
-        }
       }
       break
-    default:
-      break
   }
+}
+
+function createKeyToOldIdx (children, beginIdx, endIdx) {
+  let i, key
+  const map = {}
+  for (i = beginIdx; i <= endIdx; ++i) {
+    key = children[i].key
+    if (isDef(key)) map[key] = i
+  }
+  return map
+}
+
+function isDef (v) {
+  return v !== undefined && v !== null
+}
+
+function sameVnode (a, b) {
+  return (
+    a.key === b.key &&
+    a.tag === b.tag &&
+    isDef(a.data) === isDef(b.data)
+  )
 }
 
 function patchText(prev, next) {

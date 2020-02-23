@@ -8,11 +8,12 @@ const vnode = createElement('div', { id: 'box' }, [
 ])
 
 const vnode1 = createElement('div', { id: 'box' }, [
-  createElement('p', { key: 'd' }, '节点4'),
+  createElement('p', { key: 'e', '@click': () => { alert(1) } }, '新增的节点1'),
   createElement('p', { key: 'a' }, '节点1'),
   createElement('p', { key: 'b', style: { color: 'blue' } }, '节点2'),
-  createElement('p', { key: 'e' }, '节点5'),
-  createElement('p', { key: 'f' }, '节点6')
+  createElement('p', { key: 'c', class: 'header' }, '节点3'),
+  createElement('p', { key: 'f' }, '新增的节点2'),
+  createElement('p', { key: 'd' }, '节点4')
 ])
 
 setTimeout(() => {
