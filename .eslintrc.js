@@ -19,6 +19,7 @@ module.exports = {
     'space-before-function-paren': 0,
     'no-unused-vars': 1,
     'no-new': 0,
-    'no-cond-assign': 0
+    'no-cond-assign': 0,
+    'no-prototype-builtins': 0
   }
 }
