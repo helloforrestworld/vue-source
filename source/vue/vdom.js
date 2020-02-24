@@ -1,8 +1,7 @@
 const vnodeType = {
   HTML: 'HTML',
   TEXT: 'TEXT',
-  COMPONENT: 'COMPONENT',
-  CLASS_COMPONENT: 'CLASS_COMPONENT'
+  COMPONENT: 'COMPONENT'
 }
 
 const childType = {
@@ -11,6 +10,7 @@ const childType = {
   MULTIPLE: 'MULTIPLE'
 }
 
+// 创建元素节点
 export function createElement(tag, data, children = null) {
   let flag
   if (typeof tag === 'string') {
@@ -32,9 +32,10 @@ export function createElement(tag, data, children = null) {
       childrenFrag = childType.MULTIPLE
     }
   } else {
-    // 其他情况认为是一个文本
     childrenFrag = childType.SINGLE
-    children = createTextNode(children + '')
+    if (isPrimitive(children)) {
+      children = createTextNode(children + '')
+    }
   }
 
   return {
@@ -45,6 +46,17 @@ export function createElement(tag, data, children = null) {
     children,
     childrenFrag,
     el: null
+  }
+}
+
+// 创建文本节点
+function createTextNode(text) {
+  return {
+    flag: vnodeType.TEXT,
+    tag: null,
+    data: null,
+    children: text,
+    childType: childType.EMPTY
   }
 }
 
@@ -99,7 +111,7 @@ function patchElement(prev, next, container) {
     }
   }
   // 更新子元素
-  updateChildren(
+  patchChildren(
     prev.childrenFrag,
     next.childrenFrag,
     prev.children,
@@ -108,7 +120,7 @@ function patchElement(prev, next, container) {
   )
 }
 
-function updateChildren(
+function patchChildren(
   prevChildFrag,
   nextChildFrag,
   prevChildren,
@@ -160,124 +172,99 @@ function updateChildren(
           }
           break
         case childType.MULTIPLE:
-          let oldStartIdx = 0
-          let oldEndIdx = prevChildren.length - 1
-          let newStartIdx = 0
-          let newEndIdx = nextChildren.length - 1
-
-          let oldStartVnode = prevChildren[0]
-          let oldEndVnode = prevChildren[oldEndIdx]
-          let newStartVnode = nextChildren[0]
-          let newEndVnode = nextChildren[newEndIdx]
-          let oldKeyToIdx, vnodeToMove
-
-          // 新旧只要有一个左游标超出右游标，循环结束
-          while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
-            if (oldStartVnode === undefined) { // 当旧的vnode被移到左边后
-              oldStartVnode = prevChildren[++oldStartIdx]
-            } else if (oldEndVnode === undefined) {
-              oldEndVnode = prevChildren[--oldEndIdx]
-            } else if (sameVnode(oldStartVnode, newStartVnode)) {
-              patch(oldStartVnode, newStartVnode, container)
-              oldStartVnode = prevChildren[++oldStartIdx]
-              newStartVnode = nextChildren[++newStartIdx]
-            } else if (sameVnode(oldEndVnode, newEndVnode)) {
-              patch(oldEndVnode, newEndVnode, container)
-              oldEndVnode = prevChildren[--oldEndIdx]
-              newEndVnode = nextChildren[--newEndIdx]
-            } else if (sameVnode(oldStartVnode, newEndVnode)) {
-              patch(oldStartVnode, newEndVnode, container)
-              // 旧头和新尾相同，把旧节点移动到右侧
-              container.insertBefore(oldStartVnode.el, oldEndVnode.el.nextSibling)
-              oldStartVnode = prevChildren[++oldStartIdx]
-              newEndVnode = nextChildren[--newEndIdx]
-            } else if (sameVnode(oldEndVnode, newStartVnode)) {
-              // 旧尾和新头相同，把旧节点移动到左侧
-              container.insertBefore(oldEndVnode.el, oldStartVnode.el)
-              oldEndVnode = prevChildren[--oldEndIdx]
-              newStartVnode = nextChildren[++newStartIdx]
-            } else {
-              // 头尾对比完毕，开始对比key
-              if (!newStartVnode.key) { // newStartVnode没有key，创建新元素
-                mount(newStartVnode, container, oldStartVnode.el)
-              } else {
-                // oldChildren key的映射对象
-                if (!oldKeyToIdx) oldKeyToIdx = createKeyToOldIdx(prevChildren, oldStartIdx, oldEndIdx)
-
-                let idxInOld = oldKeyToIdx[newStartVnode.key]
-                if (!idxInOld) { // newStartVnode有key，但是在旧的vnode没找着，同样创建新元素
-                  mount(newStartVnode, container, oldStartVnode.el)
-                } else {
-                  vnodeToMove = prevChildren[idxInOld]
-                  if (sameVnode(vnodeToMove, newStartVnode)) {
-                    // 找到可以被复用的元素
-                    patch(vnodeToMove, newStartVnode, container)
-                    // 旧vnode置为undefined
-                    prevChildren[idxInOld] = undefined
-                    // 移动找到的元素
-                    container.insertBefore(vnodeToMove.el, newStartVnode.el)
-                  } else {
-                    // 找到相同key，但是是不是用一个元素，可能tag不同等，同样创建新元素
-                    mount(newStartVnode, container, oldStartVnode.el)
-                  }
-                }
-              }
-              // 更新一下游标循环继续
-              newStartVnode = nextChildren[++newStartIdx]
-            }
-          }
-          // while循环结束
-          if (oldStartIdx > oldEndIdx) {
-            // 旧vnode节点集合先被遍历完成，说明还有新节点需要加入
-            for (; newStartIdx <= newEndIdx; newStartIdx++) {
-              // 如果newEndIdx还在最右侧，说明最右侧元素还没被挂载，元素直接append到容器最后面就得。
-              // 如果nextChildren[newEndIdx + 1]不能于undefined，说明右侧的元素有部分被挂载了，所以元素需要往它前面insert。
-              const flagNode = nextChildren[newEndIdx + 1] === undefined ? null : nextChildren[newEndIdx + 1].el
-              mount(nextChildren[newStartIdx], container, flagNode)
-            }
-          } else if (newStartIdx > newEndIdx) {
-            // 新vnode节点集合先被遍历完成，说明需要移除多余的节点
-            for (; oldStartIdx <= oldEndIdx; oldStartIdx++) {
-              container.removeChild(prevChildren[oldStartIdx].el)
-            }
-          }
+          updateChildren(prevChildren, nextChildren, container)
       }
       break
   }
 }
 
-function createKeyToOldIdx (children, beginIdx, endIdx) {
-  let i, key
-  const map = {}
-  for (i = beginIdx; i <= endIdx; ++i) {
-    key = children[i].key
-    if (isDef(key)) map[key] = i
+// 两个子节点数组diff
+function updateChildren(
+  prevChildren,
+  nextChildren,
+  container
+) {
+  let oldStartIdx = 0
+  let oldEndIdx = prevChildren.length - 1
+  let newStartIdx = 0
+  let newEndIdx = nextChildren.length - 1
+
+  let oldStartVnode = prevChildren[0]
+  let oldEndVnode = prevChildren[oldEndIdx]
+  let newStartVnode = nextChildren[0]
+  let newEndVnode = nextChildren[newEndIdx]
+  let oldKeyToIdx, vnodeToMove
+
+  // 新旧只要有一个左游标超出右游标，循环结束
+  while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+    if (oldStartVnode === undefined) { // 当旧的vnode被移到左边后
+      oldStartVnode = prevChildren[++oldStartIdx]
+    } else if (oldEndVnode === undefined) {
+      oldEndVnode = prevChildren[--oldEndIdx]
+    } else if (sameVnode(oldStartVnode, newStartVnode)) {
+      patch(oldStartVnode, newStartVnode, container)
+      oldStartVnode = prevChildren[++oldStartIdx]
+      newStartVnode = nextChildren[++newStartIdx]
+    } else if (sameVnode(oldEndVnode, newEndVnode)) {
+      patch(oldEndVnode, newEndVnode, container)
+      oldEndVnode = prevChildren[--oldEndIdx]
+      newEndVnode = nextChildren[--newEndIdx]
+    } else if (sameVnode(oldStartVnode, newEndVnode)) {
+      patch(oldStartVnode, newEndVnode, container)
+      // 旧头和新尾相同，把旧节点移动到右侧
+      container.insertBefore(oldStartVnode.el, oldEndVnode.el.nextSibling)
+      oldStartVnode = prevChildren[++oldStartIdx]
+      newEndVnode = nextChildren[--newEndIdx]
+    } else if (sameVnode(oldEndVnode, newStartVnode)) {
+      // 旧尾和新头相同，把旧节点移动到左侧
+      container.insertBefore(oldEndVnode.el, oldStartVnode.el)
+      oldEndVnode = prevChildren[--oldEndIdx]
+      newStartVnode = nextChildren[++newStartIdx]
+    } else {
+      // 头尾对比完毕，开始对比key
+      if (!newStartVnode.key) { // newStartVnode没有key，创建新元素
+        mount(newStartVnode, container, oldStartVnode.el)
+      } else {
+        // oldChildren key的映射对象
+        if (!oldKeyToIdx) oldKeyToIdx = createKeyToOldIdx(prevChildren, oldStartIdx, oldEndIdx)
+
+        let idxInOld = oldKeyToIdx[newStartVnode.key]
+        if (!idxInOld) { // newStartVnode有key，但是在旧的vnode没找着，同样创建新元素
+          mount(newStartVnode, container, oldStartVnode.el)
+        } else {
+          vnodeToMove = prevChildren[idxInOld]
+          if (sameVnode(vnodeToMove, newStartVnode)) {
+            // 找到可以被复用的元素
+            patch(vnodeToMove, newStartVnode, container)
+            // 旧vnode置为undefined
+            prevChildren[idxInOld] = undefined
+            // 移动找到的元素
+            container.insertBefore(vnodeToMove.el, newStartVnode.el)
+          } else {
+            // 找到相同key，但是是不是用一个元素，可能tag不同等，同样创建新元素
+            mount(newStartVnode, container, oldStartVnode.el)
+          }
+        }
+      }
+      // 更新一下游标循环继续
+      newStartVnode = nextChildren[++newStartIdx]
+    }
   }
-  return map
-}
-
-function isDef (v) {
-  return v !== undefined && v !== null
-}
-
-function sameVnode (a, b) {
-  return (
-    a.key === b.key &&
-    a.tag === b.tag &&
-    isDef(a.data) === isDef(b.data)
-  )
-}
-
-function patchText(prev, next) {
-  const el = next.el = prev.el
-  if (next.children !== prev.children) {
-    el.nodeValue = next.children
+  // while循环结束
+  if (oldStartIdx > oldEndIdx) {
+    // 旧vnode节点集合先被遍历完成，说明还有新节点需要加入
+    for (; newStartIdx <= newEndIdx; newStartIdx++) {
+      // 如果newEndIdx还在最右侧，说明最右侧元素还没被挂载，元素直接append到容器最后面就得。
+      // 如果nextChildren[newEndIdx + 1]不等于undefined，说明右侧的元素有部分被挂载了，所以元素需要往它前面insert。
+      const flagNode = nextChildren[newEndIdx + 1] === undefined ? null : nextChildren[newEndIdx + 1].el
+      mount(nextChildren[newStartIdx], container, flagNode)
+    }
+  } else if (newStartIdx > newEndIdx) {
+    // 新vnode节点集合先被遍历完成，说明需要移除多余的节点
+    for (; oldStartIdx <= oldEndIdx; oldStartIdx++) {
+      container.removeChild(prevChildren[oldStartIdx].el)
+    }
   }
-}
-
-function replaceVnode(prev, next, container) {
-  container.removeChild(prev.el)
-  mount(next, container)
 }
 
 function mount(vnode, container, flagNode) {
@@ -319,6 +306,13 @@ function mountText(vnode, container) {
   container.appendChild(dom)
 }
 
+function patchText(prev, next) {
+  const el = next.el = prev.el
+  if (next.children !== prev.children) {
+    el.nodeValue = next.children
+  }
+}
+
 function patchData(el, key, prev, next) {
   switch (key) {
     case 'style':
@@ -348,13 +342,38 @@ function patchData(el, key, prev, next) {
   }
 }
 
-// 新建文本vnode
-function createTextNode(text) {
-  return {
-    flag: vnodeType.TEXT,
-    tag: null,
-    data: null,
-    children: text,
-    childType: childType.EMPTY
+function replaceVnode(prev, next, container) {
+  container.removeChild(prev.el)
+  mount(next, container)
+}
+
+function isPrimitive (value) {
+  return (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'symbol' ||
+    typeof value === 'boolean'
+  )
+}
+
+function createKeyToOldIdx (children, beginIdx, endIdx) {
+  let i, key
+  const map = {}
+  for (i = beginIdx; i <= endIdx; ++i) {
+    key = children[i].key
+    if (isDef(key)) map[key] = i
   }
+  return map
+}
+
+function isDef (v) {
+  return v !== undefined && v !== null
+}
+
+function sameVnode (a, b) {
+  return (
+    a.key === b.key &&
+    a.tag === b.tag &&
+    isDef(a.data) === isDef(b.data)
+  )
 }
